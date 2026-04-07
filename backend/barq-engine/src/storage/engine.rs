@@ -76,8 +76,8 @@ impl StorageEngine {
     ///
     /// # Returns
     /// Object metadata including ETag
-    pub async fn put_object(&self, key: String, data_bytes: bytes::Bytes) -> Result<ObjectMeta> {
-        let data = data_bytes.as_ref();
+    pub async fn put_object(&self, key: String, body: axum::body::Body) -> Result<ObjectMeta> {
+        use futures_util::StreamExt;
         
         // Validate key
         if key.is_empty() || key.contains("..") {
@@ -92,24 +92,35 @@ impl StorageEngine {
                 .map_err(|e| StorageError::IoError(e.to_string()))?;
         }
 
-        let etag = {
-            let data_clone = data_bytes.clone(); // O(1) Arc clone instead of copying 590MB
-            tokio::task::spawn_blocking(move || format!("{:x}", md5::compute(data_clone)))
-                .await
-                .map_err(|e| StorageError::IoError(format!("MD5 compute error: {}", e)))?
-        };
+        let mut file = tokio::fs::File::create(&object_path).await
+            .map_err(|e| StorageError::IoError(e.to_string()))?;
+            
+        let mut hasher = md5::Context::new();
+        let mut total_size = 0u64;
 
-        // Write data
-        if self.direct_io {
-            self.write_direct(&object_path, data).await?;
-        } else {
-            tokio::fs::write(&object_path, data).await
-                .map_err(|e| StorageError::IoError(e.to_string()))?;
+        let mut data_stream = body.into_data_stream();
+        
+        while let Some(chunk_res) = data_stream.next().await {
+            let chunk = chunk_res.map_err(|e| StorageError::IoError(e.to_string()))?;
+            hasher.consume(&chunk);
+            total_size += chunk.len() as u64;
+            
+            use tokio::io::AsyncWriteExt;
+            if self.direct_io {
+                // Direct IO fallback here is complex, we just write_all for streaming
+                file.write_all(&chunk).await
+                    .map_err(|e| StorageError::IoError(e.to_string()))?;
+            } else {
+                file.write_all(&chunk).await
+                    .map_err(|e| StorageError::IoError(e.to_string()))?;
+            }
         }
+
+        let etag = format!("{:x}", hasher.compute());
 
         let meta = ObjectMeta {
             key: key.clone(),
-            size: data.len() as u64,
+            size: total_size,
             created_at: std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
@@ -120,7 +131,7 @@ impl StorageEngine {
         // Update index
         self.objects.insert(key.clone(), meta.clone());
 
-        debug!("Stored object: {} ({} bytes)", key, data.len());
+        tracing::debug!("Stored object: {} ({} bytes)", key, total_size);
         Ok(meta)
     }
 

@@ -2,7 +2,7 @@
 
 use super::AppState;
 use axum::{
-    body::Bytes,
+    body::{Body, Bytes},
     extract::{Path, State},
     http::{StatusCode, header},
     response::{IntoResponse, Response},
@@ -13,27 +13,18 @@ use tracing::{debug, error, info};
 pub async fn put_object(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
-    body: Bytes,
+    body: Body,
 ) -> Response {
     let full_key = format!("{}/{}", bucket, key);
     
-    match state.storage.put_object(full_key.clone(), body.clone()).await {
+    // Convert Body stream to process it
+    match state.storage.put_object(full_key.clone(), body).await {
         Ok(meta) => {
             debug!("PUT object: {} (ETag: {})", full_key, meta.etag);
             
-            // Only cache small objects (e.g., < 10MB) to prevent memory & network exhaustion
-            if body.len() < 10 * 1024 * 1024 {
-                if let Some(ref cache) = state.cache {
-                    let cache_key = format!("{}/{}", bucket, key);
-                    if let Err(e) = cache.put(&cache_key, body.clone(), None).await {
-                        error!("Failed to cache object {}: {}", full_key, e);
-                    }
-                }
-            }
-            
             // Save object metadata to database
             if let Ok(Some(bucket_model)) = state.db.get_bucket_by_name(&bucket).await {
-                let size = body.len() as i64;
+                let size = meta.size as i64;
                 let content_type = "application/octet-stream"; // Optional: could extract from headers
                 
                 // Try getting existing object to update size difference or just insert/update
