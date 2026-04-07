@@ -1,0 +1,43 @@
+[storage]
+data_dir = "./data"
+direct_io = true
+buffer_alignment = 4096
+cpu_affinity = true
+io_threads = 4
+
+[metadata]
+db_path = "./metadata"
+cache_size = 1073741824
+use_lsm = true
+
+[network]
+bind_address = "0.0.0.0:8080"
+max_connections = 10000
+timeout = 300
+
+[auth]
+jwt_secret = "change-me-in-production"
+jwt_expiration = 3600
+shared_secret = "change-me-in-production"
+
+[erasure]
+data_chunks = 12
+parity_chunks = 4
+use_simd = true
+
+[database]
+url = "postgresql://husain:tt55oo77@31.97.217.73/barqx30"
+max_connections = 20
+
+[cache]
+enabled = false
+redis_url = "redis://localhost:6379"
+memory_size = 10000
+ttl_seconds = 3600
+
+[cdn]
+enabled = true
+node_id = "edge-us-east-1"
+region = "us-east-1"
+bind_port = 8081
+origin_url = "http://localhost:8080"
