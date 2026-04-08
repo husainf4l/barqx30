@@ -1,2 +1,95 @@
 /* You can add global styles to this file, and also import other style files */
 @use "tailwindcss";
+
+/* ── Design System Semantic Tokens ────────────────────────────────────── */
+/* Light mode defaults */
+:root {
+  --primary:              oklch(0.704 0.135 217);
+  --primary-foreground:   oklch(1 0 0);
+  --background:           oklch(1 0 0);
+  --foreground:           oklch(0.145 0 0);
+  --card:                 oklch(1 0 0);
+  --card-foreground:      oklch(0.145 0 0);
+  --muted:                oklch(0.97 0 0);
+  --muted-foreground:     oklch(0.45 0 0);
+  --border:               oklch(0.9 0 0);
+  --input:                oklch(0.9 0 0);
+  --ring:                 oklch(0.704 0.135 217);
+  --destructive:          oklch(0.577 0.245 27);
+  --destructive-foreground: oklch(1 0 0);
+  --radius:               0.5rem;
+}
+
+/* Dark mode overrides */
+.dark {
+  --primary:              oklch(0.765 0.134 212);
+  --primary-foreground:   oklch(0.145 0 0);
+  --background:           oklch(0.145 0 0);
+  --foreground:           oklch(0.985 0 0);
+  --card:                 oklch(0.205 0 0);
+  --card-foreground:      oklch(0.985 0 0);
+  --muted:                oklch(0.269 0 0);
+  --muted-foreground:     oklch(0.71 0 0);
+  --border:               oklch(1 0 0 / 10%);
+  --input:                oklch(1 0 0 / 15%);
+  --ring:                 oklch(0.765 0.134 212);
+  --destructive:          oklch(0.704 0.22 22);
+  --destructive-foreground: oklch(1 0 0);
+}
+
+/* ── Register tokens as Tailwind utilities ────────────────────────────── */
+@theme inline {
+  --color-primary:              var(--primary);
+  --color-primary-foreground:   var(--primary-foreground);
+  --color-background:           var(--background);
+  --color-foreground:           var(--foreground);
+  --color-card:                 var(--card);
+  --color-card-foreground:      var(--card-foreground);
+  --color-muted:                var(--muted);
+  --color-muted-foreground:     var(--muted-foreground);
+  --color-border:               var(--border);
+  --color-input:                var(--input);
+  --color-ring:                 var(--ring);
+  --color-destructive:          var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+}
+
+/* ── Base reset ───────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  font-family: 'Inter', 'Cairo', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* ── Staggered fade-up entry animation ──────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+.animate-fade-up {
+  animation: fadeUp 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Stagger via CSS custom property --index */
+.animate-stagger {
+  animation: fadeUp 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--index, 0) * 50ms);
+}
+
+/* Skeleton pulse */
+@keyframes shimmer {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+.animate-skeleton {
+  animation: shimmer 1.5s ease-in-out infinite;
+}

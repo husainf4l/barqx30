@@ -192,15 +192,9 @@ impl StorageEngine {
     /// Write data using platform-specific I/O
     #[cfg(target_os = "linux")]
     async fn write_direct(&self, path: &PathBuf, data: &[u8]) -> Result<()> {
-        // Linux: Use io_uring for true zero-copy I/O
-        use tokio_uring::fs::File;
-        
-        let file = File::create(path).await
+        tokio::fs::write(path, data).await
             .map_err(|e| StorageError::IoError(e.to_string()))?;
-        let (result, _) = file.write_at(data, 0).await;
-        result.map_err(|e| StorageError::IoError(e.to_string()))?;
-        
-        debug!("io_uring write: {} bytes", data.len());
+        debug!("tokio::fs write: {} bytes", data.len());
         Ok(())
     }
 
@@ -216,21 +210,10 @@ impl StorageEngine {
     /// Read data using platform-specific I/O
     #[cfg(target_os = "linux")]
     async fn read_direct(&self, path: &PathBuf) -> Result<Vec<u8>> {
-        // Linux: Use io_uring for true zero-copy I/O
-        use tokio_uring::fs::File;
-        
-        let file = File::open(path).await
+        let data = tokio::fs::read(path).await
             .map_err(|e| StorageError::IoError(e.to_string()))?;
-        let metadata = std::fs::metadata(path)
-            .map_err(|e| StorageError::IoError(e.to_string()))?;
-        let file_size = metadata.len() as usize;
-        
-        let mut buffer = vec![0u8; file_size];
-        let (result, buf) = file.read_at(buffer, 0).await;
-        result.map_err(|e| StorageError::IoError(e.to_string()))?;
-        
-        debug!("io_uring read: {} bytes", buf.len());
-        Ok(buf)
+        debug!("tokio::fs read: {} bytes", data.len());
+        Ok(data)
     }
 
     #[cfg(target_os = "macos")]

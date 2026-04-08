@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpRequest, HttpEvent } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
 
@@ -33,8 +33,8 @@ export interface BucketListResponse {
   providedIn: 'root'
 })
 export class StorageService {
-  private apiUrl = 'http://localhost:8080/api';
-  private s3Url = 'http://localhost:8080';
+  private apiUrl = '/api';
+  private s3Url = '/s3';
 
   constructor(
     private http: HttpClient,
@@ -79,13 +79,14 @@ export class StorageService {
   }
 
   // S3-compatible API - Object operations
-  uploadFile(bucketName: string, key: string, file: File): Observable<any> {
+  uploadFile(bucketName: string, key: string, file: File): Observable<HttpEvent<any>> {
     const headers = this.getHeaders().set('Content-Type', file.type || 'application/octet-stream');
-    return this.http.put(
-      `${this.s3Url}/${bucketName}/${key}`,
-      file,
-      { headers, responseType: 'text' }
-    );
+    const req = new HttpRequest('PUT', `${this.s3Url}/${bucketName}/${key}`, file, {
+      headers,
+      reportProgress: true,
+      responseType: 'text',
+    });
+    return this.http.request(req);
   }
 
   downloadFile(bucketName: string, key: string): Observable<Blob> {

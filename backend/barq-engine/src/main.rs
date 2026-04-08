@@ -38,10 +38,11 @@ struct Args {
     bind: String,
 }
 
-// Linux: Use io_uring runtime
+// Linux: Use standard tokio multi-thread runtime
 #[cfg(target_os = "linux")]
-fn main() -> Result<()> {
-    tokio_uring::start(async_main())
+#[tokio::main]
+async fn main() -> Result<()> {
+    async_main().await
 }
 
 // macOS: Use standard tokio runtime
@@ -124,9 +125,14 @@ async fn async_main() -> Result<()> {
         None
     };
 
-    // Start network server
+    // Start network server — prefer config file bind address, fall back to CLI arg
+    let bind_addr = if args.bind != "0.0.0.0:8080" {
+        args.bind.clone()
+    } else {
+        config.network.bind_address.clone()
+    };
     info!("🌐 Starting network server...");
-    network::start_server(&args.bind, storage_engine, metadata_store, auth, db, cache_manager).await?;
+    network::start_server(&bind_addr, storage_engine, metadata_store, auth, db, cache_manager).await?;
 
     Ok(())
 }

@@ -1,0 +1,15 @@
+{
+  "/api": {
+    "target": "http://localhost:8101",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "info"
+  },
+  "/s3": {
+    "target": "http://localhost:8101",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": { "^/s3": "" },
+    "logLevel": "info"
+  }
+}

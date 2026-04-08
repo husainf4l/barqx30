@@ -75,10 +75,6 @@ indicatif = "0.17"
 colored = "2.1"
 futures-util = "0.3.32"
 
-# Linux-only: io_uring for ultra-low latency
-[target.'cfg(target_os = "linux")'.dependencies]
-tokio-uring = "0.5"
-
 [profile.release]
 opt-level = 3
 lto = "fat"

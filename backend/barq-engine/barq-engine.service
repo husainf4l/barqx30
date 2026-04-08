@@ -1,0 +1,37 @@
+[Unit]
+Description=BARQ X30 Storage Engine
+Documentation=https://github.com/barqx30/barq-engine
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=husain
+Group=husain
+
+WorkingDirectory=/home/husain/apps/barqx30/backend/barq-engine
+ExecStart=/usr/local/bin/barq-x30-engine --config /home/husain/apps/barqx30/backend/barq-engine/config.toml
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Restart policy
+Restart=always
+RestartSec=5
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=barq-engine
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/husain/apps/barqx30/backend/barq-engine/data
+ReadWritePaths=/home/husain/apps/barqx30/backend/barq-engine/metadata
+
+# Resource limits
+LimitNOFILE=1048576
+LimitNPROC=65536
+
+[Install]
+WantedBy=multi-user.target

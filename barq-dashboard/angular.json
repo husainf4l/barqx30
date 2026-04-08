@@ -65,7 +65,8 @@
               "buildTarget": "barq-dashboard:build:production"
             },
             "development": {
-              "buildTarget": "barq-dashboard:build:development"
+              "buildTarget": "barq-dashboard:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"
